@@ -180,7 +180,7 @@ skills/founder-plan/         SKILL.md, compile.py
 tests/                       the tests for every tool
 ```
 
-Your own files live in `founder/` in your project. The skills read each other's.
+Your own files live in `founder/` in your project. The skills read each other's files.
 
 ## Credit
 
