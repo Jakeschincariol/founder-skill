@@ -75,8 +75,8 @@ Write `founder/pricing.md`:
 ## Rules
 
 - Price answers from simulated buyers pick what to test. They are not proof.
-- Never price below variable cost to "buy" customers without saying so, and how
-  long the CFO says the business can afford it.
+- Never price below variable cost to "buy" customers without saying so, and without
+  saying how long the CFO says the business can afford it.
 - No fake anchors: no "was $X" price that was never charged.
 
 ## Output
