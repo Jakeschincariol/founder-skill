@@ -19,6 +19,15 @@ everything that makes buying it an easy yes. This skill builds that, using the
 Offers lens in `../founder-board/lenses.md` as the method (a summary of the
 framework in Alex Hormozi's *$100M Offers*; never present it as his words).
 
+## Founder feedback
+
+Before anything else, read `founder/feedback/offer.md` if it exists (the founder
+writes it by hand or from Founder GUI, `gui/` in this repo). Every item under
+`## Open` is a request from the founder: `change` means do it, `keep` means do not
+undo it, `question` means answer it in your summary. Act on each one in this run,
+then move it under `## Addressed` as `- [x] ...` with one line on what you did. If
+an item cannot be done (it needs a number nobody has), leave it open and say why.
+
 ## Step 1: read what is already known
 
 - `founder/idea.md` and `founder/pitch.md`: what is sold today.

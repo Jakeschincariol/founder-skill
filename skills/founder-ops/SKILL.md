@@ -17,6 +17,15 @@ A plan that works on paper fails at 7am on a Monday. This skill makes sure the
 first day, week and month can actually be run, and that the CFO's numbers include
 what running it really costs.
 
+## Founder feedback
+
+Before anything else, read `founder/feedback/ops.md` if it exists (the founder
+writes it by hand or from Founder GUI, `gui/` in this repo). Every item under
+`## Open` is a request from the founder: `change` means do it, `keep` means do not
+undo it, `question` means answer it in your summary. Act on each one in this run,
+then move it under `## Addressed` as `- [x] ...` with one line on what you did. If
+an item cannot be done (it needs a number nobody has), leave it open and say why.
+
 ## Step 1: what the business has to do every day
 
 From `founder/idea.md`, `founder/offer.md` and `founder/numbers.json`, write the

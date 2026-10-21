@@ -23,6 +23,15 @@ Tool in this folder:
 python3 "${CLAUDE_SKILL_DIR}/unit_economics.py" founder/numbers.json --out founder/cfo.md
 ```
 
+## Founder feedback
+
+Before anything else, read `founder/feedback/cfo.md` if it exists (the founder
+writes it by hand or from Founder GUI, `gui/` in this repo). Every item under
+`## Open` is a request from the founder: `change` means do it, `keep` means do not
+undo it, `question` means answer it in your summary. Act on each one in this run,
+then move it under `## Addressed` as `- [x] ...` with one line on what you did. If
+an item cannot be done (it needs a number nobody has), leave it open and say why.
+
 ## Step 1: gather the inputs
 
 Write `founder/numbers.json` (shape: `example.json` in this folder, a walk-in

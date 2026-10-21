@@ -15,6 +15,15 @@ argument-hint: "[name ideas, if any]"
 A brand is the promise a customer remembers. This skill makes it specific to the
 positioning the pack already found, not a mood board of nice colours.
 
+## Founder feedback
+
+Before anything else, read `founder/feedback/brand.md` if it exists (the founder
+writes it by hand or from Founder GUI, `gui/` in this repo). Every item under
+`## Open` is a request from the founder: `change` means do it, `keep` means do not
+undo it, `question` means answer it in your summary. Act on each one in this run,
+then move it under `## Addressed` as `- [x] ...` with one line on what you did. If
+an item cannot be done (it needs a number nobody has), leave it open and say why.
+
 ## Step 1: read the brief
 
 `founder/idea.md`, `founder/marketing.md` (the positioning line and the first
