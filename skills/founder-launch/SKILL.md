@@ -16,6 +16,15 @@ Launching is a project with a date. This skill turns everything else in the pack
 into a dated plan, and starts with the cheapest way to find out if real people
 will pay before the big money goes out.
 
+## Founder feedback
+
+Before anything else, read `founder/feedback/launch.md` if it exists (the founder
+writes it by hand or from Founder GUI, `gui/` in this repo). Every item under
+`## Open` is a request from the founder: `change` means do it, `keep` means do not
+undo it, `question` means answer it in your summary. Act on each one in this run,
+then move it under `## Addressed` as `- [x] ...` with one line on what you did. If
+an item cannot be done (it needs a number nobody has), leave it open and say why.
+
 ## Step 1: test before you spend
 
 Pick the cheapest real test that fits the business, and run it before signing the

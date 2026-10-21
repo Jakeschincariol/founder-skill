@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Founder GUI</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232f5d50'/%3E%3Cpath d='M9 22V10h12M9 16h9' stroke='white' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/style.css">
+<!--SNAPSHOT-->
+</head>
+<body>
+<div id="app">
+  <aside id="side">
+    <div class="brand"><span class="logo">F</span><div><b>Founder GUI</b><small id="hub-note"></small></div></div>
+    <nav id="projects"></nav>
+    <form id="add-project" class="add-project">
+      <input name="path" placeholder="/path/to/project" autocomplete="off" spellcheck="false">
+      <button type="submit" data-i18n="add">Add</button>
+    </form>
+    <div class="side-foot"><button id="lang" class="link"></button><button id="theme" class="link"></button></div>
+  </aside>
+  <main id="main"><div class="empty-state" id="welcome"></div></main>
+</div>
+<div id="drawer" class="drawer" hidden><div class="drawer-body"></div></div>
+<div id="toast" class="toast" hidden></div>
+<script src="/static/md.js"></script>
+<script src="/static/charts.js"></script>
+<script src="/static/i18n.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>

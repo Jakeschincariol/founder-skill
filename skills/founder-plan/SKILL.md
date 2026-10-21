@@ -23,6 +23,15 @@ Tool in this folder:
 python3 "${CLAUDE_SKILL_DIR}/compile.py" --dir founder
 ```
 
+## Founder feedback
+
+Before anything else, read `founder/feedback/plan.md` if it exists (the founder
+writes it by hand or from Founder GUI, `gui/` in this repo). Every item under
+`## Open` is a request from the founder: `change` means do it, `keep` means do not
+undo it, `question` means answer it in your summary. Act on each one in this run,
+then move it under `## Addressed` as `- [x] ...` with one line on what you did. If
+an item cannot be done (it needs a number nobody has), leave it open and say why.
+
 ## Step 1: see what is there
 
 ```bash
