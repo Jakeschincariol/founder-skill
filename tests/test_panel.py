@@ -65,6 +65,26 @@ class Flow(unittest.TestCase):
         self.assertIn('"id": "P001"', brief)
         self.assertIn("Do not be agreeable", brief)
 
+    def test_reinit_clears_stale_answers(self):
+        self.answer("P001", True, "quality")
+        panel.init(self.d, example("founder-consumer", "customer.example.json"),
+                   example("founder-consumer", "pitch.example.md"), n=20, seed=5)
+        self.assertEqual(os.listdir(os.path.join(self.d, "answers")), [])
+        ids = [j[0] for w in panel.write_briefs(self.d) for j in w]
+        self.assertIn("P001", ids)
+
+    def test_quick_flag_runs_twenty_buyers(self):
+        d2 = tempfile.mkdtemp()
+        try:
+            panel.main(["--dir", d2, "init",
+                        "--customer", example("founder-consumer", "customer.example.json"),
+                        "--pitch", example("founder-consumer", "pitch.example.md"),
+                        "--quick"])
+            with open(os.path.join(d2, "panel.json")) as fh:
+                self.assertEqual(json.load(fh)["n"], 20)
+        finally:
+            shutil.rmtree(d2)
+
     def test_answered_buyers_get_no_new_brief(self):
         self.answer("P001", True, "quality")
         ids = [j[0] for w in panel.write_briefs(self.d) for j in w]

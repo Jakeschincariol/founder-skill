@@ -146,8 +146,15 @@ def init(d, customer_path, pitch_path, n=100, seed=None):
     cards = deal(customer, n, seed)
     _write_json(_path(d, "panel.json"), {"n": n, "seed": seed, "customer": customer, "pitch": pitch})
     _write_json(_path(d, "personas.json"), cards)
-    os.makedirs(_path(d, "briefs"), exist_ok=True)
-    os.makedirs(_path(d, "answers"), exist_ok=True)
+    # A re-init starts a fresh round: drop the previous pitch's briefs and
+    # answers so `prompts` writes every brief again.
+    for sub in ("briefs", "answers"):
+        subdir = _path(d, sub)
+        if os.path.isdir(subdir):
+            for name in os.listdir(subdir):
+                os.remove(os.path.join(subdir, name))
+        else:
+            os.makedirs(subdir)
     return cards
 
 
@@ -368,7 +375,9 @@ def main(argv=None):
     i = sub.add_parser("init")
     i.add_argument("--customer", required=True)
     i.add_argument("--pitch", required=True)
-    i.add_argument("--n", type=int, default=100)
+    size = i.add_mutually_exclusive_group()
+    size.add_argument("--n", type=int, default=100)
+    size.add_argument("--quick", action="store_true", help="run 20 buyers instead of --n 100")
     i.add_argument("--seed", type=int)
     p = sub.add_parser("prompts")
     p.add_argument("--wave", type=int, default=WAVE)
@@ -381,7 +390,7 @@ def main(argv=None):
     a = ap.parse_args(argv)
     try:
         if a.cmd == "init":
-            cards = init(a.dir, a.customer, a.pitch, a.n, a.seed)
+            cards = init(a.dir, a.customer, a.pitch, 20 if a.quick else a.n, a.seed)
             st, _ = load_state(a.dir)
             print("dealt %d buyers (seed %s) into %s. Next: panel.py prompts" % (len(cards), st["seed"], a.dir))
         elif a.cmd == "prompts":
