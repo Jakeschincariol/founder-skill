@@ -35,6 +35,12 @@ class Compile(unittest.TestCase):
         self.assertEqual(v, "Incomplete")
         self.assertIn("run /founder-cfo", text)
 
+    def test_price_without_costs_is_incomplete(self):
+        with open(os.path.join(self.d, "numbers.json"), "w") as fh:
+            json.dump({"price": 100, "plan_per_day": 1}, fh)
+        v, text = plan.compile_plan(self.d)
+        self.assertEqual(v, "Incomplete")
+
     def test_good_numbers_and_panel_is_profitable(self):
         self.numbers()
         self.panel(40)

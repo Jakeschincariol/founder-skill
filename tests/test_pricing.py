@@ -40,6 +40,11 @@ class Pricing(unittest.TestCase):
         got, dropped = vw.read(path)
         self.assertEqual((len(got), dropped), (10, 2))
 
+    def test_decimal_comma_is_not_a_thousands_separator(self):
+        self.assertEqual(vw._f("12,50"), 12.5)
+        self.assertEqual(vw._f("1,234"), 1234.0)
+        self.assertEqual(vw._f("1,234.56"), 1234.56)
+
     def test_too_few_answers_is_refused(self):
         with self.assertRaises(vw.PricingError):
             vw.analyse(rows(4))

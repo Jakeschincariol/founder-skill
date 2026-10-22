@@ -43,7 +43,16 @@ class PricingError(Exception):
 
 def _f(v):
     try:
-        x = float(str(v).replace("$", "").replace(",", "").strip())
+        s = str(v).replace("$", "").strip()
+        if "," in s and "." in s:
+            s = s.replace(",", "")  # 1,234.56: thousands separator
+        elif "," in s:
+            head, _, tail = s.rpartition(",")
+            if "," not in head and len(tail) in (1, 2):
+                s = head + "." + tail  # 12,50: decimal comma
+            else:
+                s = s.replace(",", "")  # 1,234 / 1,234,567: thousands
+        x = float(s)
     except (TypeError, ValueError):
         return None
     return x if x > 0 else None

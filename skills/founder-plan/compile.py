@@ -73,6 +73,12 @@ def verdict(d, min_buy_rate=0.25):
     numbers = panel = None
     raw = _read(os.path.join(d, "numbers.json"))
     if raw:
+        spec = json.loads(raw)
+        # A price with no cost fields at all would "pass" every check below,
+        # so treat the economics as missing rather than Profitable.
+        if not any(k in spec for k in ("variable", "fixed_monthly", "startup")):
+            raw = None
+    if raw:
         ue = _load_unit_economics()
         numbers = ue.analyse(json.loads(raw))
         u = numbers["unit"]
