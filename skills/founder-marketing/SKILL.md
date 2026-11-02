@@ -9,9 +9,18 @@ description: >-
   campaign", "how do I get customers", "where do I advertise", "write my ads", or
   "positioning".
 argument-hint: "[budget]"
+disable-model-invocation: true
 ---
 
 # founder-marketing
+
+## Where this runs
+
+The text after this skill's slash command in the message that invoked it is the argument. If `$ARGUMENTS` was replaced with that text, use the replacement. If the message is only the command, the argument is blank and the rules already in this skill apply.
+
+This skill's folder is the directory of this `SKILL.md`. Run Python with `python` on Windows, and with `python3` when that is the command on PATH. If `${CLAUDE_SKILL_DIR}` is expanded, it is the same folder.
+
+Write `founder/` at the root of the open project. Never write it inside the installed skill folder.
 
 A business no one hears about does not exist. This skill plans how the first
 customers hear about it, using what the rest of the pack already learned instead

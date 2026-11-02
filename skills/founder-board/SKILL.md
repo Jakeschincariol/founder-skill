@@ -10,9 +10,18 @@ description: >-
   idea", "would this work", "pressure-test this", "what would a board say", "is
   this a good business", or starts the founder pack on a new idea.
 argument-hint: "<the business idea, or leave blank to use the conversation>"
+disable-model-invocation: true
 ---
 
 # founder-board
+
+## Where this runs
+
+The text after this skill's slash command in the message that invoked it is the argument. If `$ARGUMENTS` was replaced with that text, use the replacement. If the message is only the command, the argument is blank and the rules already in this skill apply.
+
+This skill's folder is the directory of this `SKILL.md`. Run Python with `python` on Windows, and with `python3` when that is the command on PATH. If `${CLAUDE_SKILL_DIR}` is expanded, it is the same folder.
+
+Write `founder/` at the root of the open project. Never write it inside the installed skill folder.
 
 The first meeting. Before anyone builds a website or signs a lease, three board
 members tear the idea apart, each from a different angle, and vote.
@@ -55,12 +64,18 @@ brief must stand on its own. Do not add your own opinion of the idea to it.
 
 ## Step 2: convene
 
-Launch three sub-agents in ONE message (Agent tool, `subagent_type:
-general-purpose`, one per member), each told: `Read founder/board/brief.md and
-founder-board's lenses.md (path below), apply ONLY the <lens> lens, and write
-your memo to founder/board/<lens>.md.` The lens file is `lenses.md` in this
-skill's folder (`${CLAUDE_SKILL_DIR}/lenses.md`; if that path is not expanded,
-use the base directory Claude Code printed for this skill).
+Launch three sub-agents in ONE message, one per member (Offers, Monopoly, Product). Each prompt stands alone: the sub-agent cannot see this chat. Give the absolute path of `founder/board/brief.md` and of `lenses.md` in this skill's folder, and tell it to read both files.
+
+In Cursor, use the Task tool:
+
+- `subagent_type`: `generalPurpose`
+- do not set `model`
+- do not set `environment` to `cloud`
+- `run_in_background`: false, so this agent waits for all three
+- `description`: `board <lens>`
+- `prompt`: `Read <absolute path of founder/board/brief.md> and <absolute path of lenses.md>. Apply ONLY the <lens> lens, and write your memo to founder/board/<lens>.md.`
+
+In Claude Code, if only the Agent tool exists, use it the same way with `subagent_type: general-purpose` (older Claude Code calls that tool Task).
 
 Each memo, in this shape:
 

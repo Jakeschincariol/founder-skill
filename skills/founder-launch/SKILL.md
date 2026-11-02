@@ -8,9 +8,18 @@ description: >-
   measure and what to change. Use when the user says "how do I launch", "launch
   plan", "when can I open", "launch checklist", "go live", or "soft open".
 argument-hint: "[target launch date]"
+disable-model-invocation: true
 ---
 
 # founder-launch
+
+## Where this runs
+
+The text after this skill's slash command in the message that invoked it is the argument. If `$ARGUMENTS` was replaced with that text, use the replacement. If the message is only the command, the argument is blank and the rules already in this skill apply.
+
+This skill's folder is the directory of this `SKILL.md`. Run Python with `python` on Windows, and with `python3` when that is the command on PATH. If `${CLAUDE_SKILL_DIR}` is expanded, it is the same folder.
+
+Write `founder/` at the root of the open project. Never write it inside the installed skill folder.
 
 Launching is a project with a date. This skill turns everything else in the pack
 into a dated plan, and starts with the cheapest way to find out if real people

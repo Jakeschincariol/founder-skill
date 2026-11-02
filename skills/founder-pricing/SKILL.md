@@ -9,9 +9,18 @@ description: >-
   says "how much should I charge", "price this", "is $X too expensive", "pricing
   strategy", "what price", or after the consumer panel.
 argument-hint: "[current price]"
+disable-model-invocation: true
 ---
 
 # founder-pricing
+
+## Where this runs
+
+The text after this skill's slash command in the message that invoked it is the argument. If `$ARGUMENTS` was replaced with that text, use the replacement. If the message is only the command, the argument is blank and the rules already in this skill apply.
+
+This skill's folder is the directory of this `SKILL.md`. Run Python with `python` on Windows, and with `python3` when that is the command on PATH. If `${CLAUDE_SKILL_DIR}` is expanded, it is the same folder.
+
+Write `founder/` at the root of the open project. Never write it inside the installed skill folder.
 
 Price is the fastest lever on the margin and the one founders guess most. This
 skill sets it from three things you can check: what buyers said, what competitors
@@ -20,7 +29,7 @@ charge, and what the business needs to earn.
 Tool in this folder:
 
 ```bash
-python3 "${CLAUDE_SKILL_DIR}/van_westendorp.py" founder/panel/answers --price 6.50 --out founder/pricing-curve.md
+python "<this skill's folder>/van_westendorp.py" founder/panel/answers --price 6.50 --out founder/pricing-curve.md
 ```
 
 ## Step 1: what buyers said
@@ -55,7 +64,7 @@ CFO's tool at two or three candidate prices to see the margin and break-even at
 each:
 
 ```bash
-python3 "${CLAUDE_SKILL_DIR}/../founder-cfo/unit_economics.py" founder/numbers.json --price 7.00
+python "<this skill's folder>/../founder-cfo/unit_economics.py" founder/numbers.json --price 7.00
 ```
 
 ## Step 4: decide

@@ -10,9 +10,18 @@ description: >-
   the user says "would people buy this", "test it on customers", "run the
   consumer panel", "simulate buyers", "who is my customer", or "validate demand".
 argument-hint: "[--n 100 | --quick] [--seed S]"
+disable-model-invocation: true
 ---
 
 # founder-consumer
+
+## Where this runs
+
+The text after this skill's slash command in the message that invoked it is the argument. If `$ARGUMENTS` was replaced with that text, use the replacement. If the message is only the command, the argument is blank and the rules already in this skill apply.
+
+This skill's folder is the directory of this `SKILL.md`. Run Python with `python` on Windows, and with `python3` when that is the command on PATH. If `${CLAUDE_SKILL_DIR}` is expanded, it is the same folder.
+
+Write `founder/` at the root of the open project. Never write it inside the installed skill folder.
 
 The craziest part of the pack. Instead of guessing whether people will buy, you
 ask a hundred of them, each one a sub-agent playing a specific buyer drawn from
@@ -22,14 +31,13 @@ What the user typed after `/founder-consumer`: `$ARGUMENTS`
 
 ## The tool
 
-All bookkeeping goes through `panel.py` in this skill's folder:
+All bookkeeping goes through `panel.py` in this skill's folder. Below, `PANEL` means:
 
 ```bash
-python3 "${CLAUDE_SKILL_DIR}/panel.py" <command>
+python "<this skill's folder>/panel.py" <command>
 ```
 
-Below, `PANEL` means exactly that. If the path is not expanded, use the base
-directory Claude Code printed for this skill. State lives in `founder/panel/`.
+`<this skill's folder>` is the absolute directory of this `SKILL.md`. Use `python` on Windows and `python3` when that is the command on PATH. State lives in `founder/panel/` in the open project.
 
 ## Step 1: the target customer
 
@@ -64,15 +72,20 @@ PANEL prompts
 
 `init` deals the persona cards (same seed, same cards; the seed is recorded).
 `prompts` writes one brief per buyer and lists them in waves of 10. For each wave,
-send ONE message with one Agent tool call per buyer in that wave (the Agent tool
-is called Task in older Claude Code versions):
+send ONE message with one sub-agent call per buyer in that wave.
 
-- `subagent_type`: `general-purpose`
+In Cursor, use the Task tool:
+
+- `subagent_type`: `generalPurpose`
+- do not set `model`
+- do not set `environment` to `cloud`
+- `run_in_background`: false, so this agent waits for the wave. If the client forces background, do not start the next wave until every Task in this wave has returned.
 - `description`: `panel <id>`
-- `prompt`: `Read <brief path> and follow it exactly. It is your whole brief.`
+- `prompt`: `Read <absolute brief path> and follow it exactly. It is your whole brief.`
 
-Wait for the whole wave before the next one. Claude Code runs about 10 tool calls
-at once by default, so 100 buyers is 10 waves. After the last wave:
+In Claude Code, if only the Agent tool exists, use it the same way with `subagent_type: general-purpose` (older Claude Code calls that tool Task).
+
+Wait for the whole wave before the next one. About 10 sub-agents run at once, so 100 buyers is 10 waves. After the last wave:
 
 ```bash
 PANEL check      # lists missing or broken answers

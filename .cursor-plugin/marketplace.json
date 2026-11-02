@@ -1,0 +1,17 @@
+{
+  "name": "founder-skill",
+  "owner": {
+    "name": "JoaoLuiz92"
+  },
+  "metadata": {
+    "description": "Founder skills for Cursor: board, competitors, consumer panel, pricing, offer, CFO, marketing, brand, operations, launch and business plan."
+  },
+  "plugins": [
+    {
+      "name": "founder-skill",
+      "source": ".",
+      "description": "Eleven skills that test a business before you launch it: a board, a competitor scout, a consumer panel of 100 buyer agents, pricing, the offer, a CFO, marketing, brand, operations, a launch plan and the business plan.",
+      "homepage": "https://github.com/JoaoLuiz92/founder-skill-to-cursor"
+    }
+  ]
+}

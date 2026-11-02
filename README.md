@@ -19,36 +19,45 @@ you spend thousands of dollars finding out the hard way.
 
 ## Install
 
-Paste this repo link into Claude and say `install skill`:
+### Cursor
+
+No Cursor, as onze skills viram os comandos `/founder-board` a `/founder-plan`.
+
+Pelo GitHub: em Customize, escolha From GitHub Repository e informe
+`https://github.com/JoaoLuiz92/founder-skill-to-cursor`. O manifesto está em
+`.cursor-plugin/marketplace.json`.
+
+Pelo script, que copia cada pasta `skills/founder-*` para `~/.cursor/skills/`:
+
+```powershell
+git clone https://github.com/JoaoLuiz92/founder-skill-to-cursor.git
+cd founder-skill-to-cursor
+powershell -File scripts/install-cursor.ps1
+```
+
+```bash
+git clone https://github.com/JoaoLuiz92/founder-skill-to-cursor.git
+cd founder-skill-to-cursor
+sh scripts/install-cursor.sh
+```
+
+Recarregue a janela. Digite `/founder-board` e a ideia na mesma mensagem. A pasta
+`founder/` nasce no projeto aberto, não dentro da skill instalada. Não use o
+repositório do GIA para isso.
+
+### Claude Code
+
+O manifesto em `.claude-plugin/` continua no repositório. No Claude Code:
 
 ```
-https://github.com/Jakeschincariol/founder-skill
-
-install skill
-```
-
-Or as a plugin, in Claude Code:
-
-```
-/plugin marketplace add Jakeschincariol/founder-skill
+/plugin marketplace add JoaoLuiz92/founder-skill-to-cursor
 /plugin install founder-skill@founder-skill
 ```
 
-Claude Code namespaces plugin skills, so installed as a plugin they show up as
-`/founder-skill:founder-board` and so on. Copy the folders instead if you want
-plain `/founder-board`:
+Ou copie as pastas para `~/.claude/skills/` se quiser o comando sem prefixo de
+plugin. O Cursor também lê essa pasta; o script acima é o caminho direto.
 
-```bash
-git clone https://github.com/Jakeschincariol/founder-skill.git
-cp -r founder-skill/skills/founder-* ~/.claude/skills/
-```
-
-Project-local instead of global: copy the same folders into your repo's
-`.claude/skills/`. No Claude Code at all? Paste any single `SKILL.md` at the top
-of a chat and it runs as a mode. You lose the sub-agents and the Python tools,
-but the method works.
-
-The tools need Python 3.8 or newer. Nothing to pip install.
+Python 3.8 ou mais novo. Nada para instalar com pip.
 
 ## The eleven
 

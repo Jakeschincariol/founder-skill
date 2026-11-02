@@ -10,9 +10,18 @@ description: >-
   profit margins", "do the numbers", "is this profitable", "break-even", "unit
   economics", "how much do I need to start", or "run the CFO".
 argument-hint: "[path to numbers.json]"
+disable-model-invocation: true
 ---
 
 # founder-cfo
+
+## Where this runs
+
+The text after this skill's slash command in the message that invoked it is the argument. If `$ARGUMENTS` was replaced with that text, use the replacement. If the message is only the command, the argument is blank and the rules already in this skill apply.
+
+This skill's folder is the directory of this `SKILL.md`. Run Python with `python` on Windows, and with `python3` when that is the command on PATH. If `${CLAUDE_SKILL_DIR}` is expanded, it is the same folder.
+
+Write `founder/` at the root of the open project. Never write it inside the installed skill folder.
 
 The person who asks "and what does that cost?" Margins decide whether a good idea
 is a business. This skill finds them, with every number traceable to an input.
@@ -20,7 +29,7 @@ is a business. This skill finds them, with every number traceable to an input.
 Tool in this folder:
 
 ```bash
-python3 "${CLAUDE_SKILL_DIR}/unit_economics.py" founder/numbers.json --out founder/cfo.md
+python "<this skill's folder>/unit_economics.py" founder/numbers.json --out founder/cfo.md
 ```
 
 ## Step 1: gather the inputs
@@ -58,7 +67,7 @@ ramp (`founder/panel/results.md`), and say how you did it.
 ## Step 2: run it
 
 ```bash
-python3 "${CLAUDE_SKILL_DIR}/unit_economics.py" founder/numbers.json --out founder/cfo.md
+python "<this skill's folder>/unit_economics.py" founder/numbers.json --out founder/cfo.md
 ```
 
 It writes: the per-unit table and the contribution (what each sale leaves after
@@ -72,8 +81,8 @@ losing year 1 and a payback beyond 12 months.
 What-ifs without editing the file:
 
 ```bash
-python3 "${CLAUDE_SKILL_DIR}/unit_economics.py" founder/numbers.json --price 7.00
-python3 "${CLAUDE_SKILL_DIR}/unit_economics.py" founder/numbers.json --volume 0.8
+python "<this skill's folder>/unit_economics.py" founder/numbers.json --price 7.00
+python "<this skill's folder>/unit_economics.py" founder/numbers.json --volume 0.8
 ```
 
 ## Step 3: the CFO's note
