@@ -25,7 +25,7 @@ def text_files():
     for base, dirs, files in os.walk(ROOT):
         dirs[:] = [d for d in dirs if d not in (".git", "__pycache__")]
         for f in files:
-            if f.endswith((".md", ".py", ".json", ".txt")) or f in ("LICENSE", ".gitignore"):
+            if f.endswith((".md", ".py", ".json", ".txt", ".ps1", ".sh")) or f in ("LICENSE", ".gitignore"):
                 yield os.path.join(base, f)
 
 
@@ -43,10 +43,22 @@ class Repo(unittest.TestCase):
             self.assertGreater(len(text.splitlines()), 60, s)
 
     def test_tools_named_in_skills_exist(self):
+        local = {
+            "founder-board": ["lenses.md"],
+            "founder-cfo": ["unit_economics.py"],
+            "founder-consumer": ["panel.py"],
+            "founder-pricing": ["van_westendorp.py"],
+            "founder-plan": ["compile.py"],
+        }
         for s in SKILLS:
             _, text = frontmatter(os.path.join(SKILLS_DIR, s, "SKILL.md"))
-            for tool in re.findall(r"\$\{CLAUDE_SKILL_DIR\}/([\w.\-/]+\.(?:py|md))", text):
-                self.assertTrue(os.path.exists(os.path.normpath(os.path.join(SKILLS_DIR, s, tool))), "%s: %s" % (s, tool))
+            self.assertNotRegex(text, r"\$\{CLAUDE_SKILL_DIR\}/", s)
+            for name in local.get(s, []):
+                self.assertIn(name, text, s)
+                self.assertTrue(os.path.isfile(os.path.join(SKILLS_DIR, s, name)), "%s: %s" % (s, name))
+        _, pricing = frontmatter(os.path.join(SKILLS_DIR, "founder-pricing", "SKILL.md"))
+        self.assertIn("founder-cfo/unit_economics.py", pricing)
+        self.assertTrue(os.path.isfile(os.path.join(SKILLS_DIR, "founder-cfo", "unit_economics.py")))
 
     def test_plugin_manifests(self):
         with open(os.path.join(ROOT, ".claude-plugin", "plugin.json")) as fh:
@@ -59,6 +71,16 @@ class Repo(unittest.TestCase):
         self.assertEqual(market["name"], "founder-skill")
         self.assertEqual(market["plugins"][0]["name"], "founder-skill")
         self.assertEqual(market["plugins"][0]["source"], "./")
+        with open(os.path.join(ROOT, ".cursor-plugin", "plugin.json")) as fh:
+            cursor_plugin = json.load(fh)
+        self.assertEqual(cursor_plugin["name"], "founder-skill")
+        self.assertEqual(cursor_plugin["skills"], "./skills")
+        self.assertTrue(os.path.isdir(os.path.join(ROOT, cursor_plugin["skills"])))
+        with open(os.path.join(ROOT, ".cursor-plugin", "marketplace.json")) as fh:
+            cursor_market = json.load(fh)
+        self.assertEqual(cursor_market["name"], "founder-skill")
+        self.assertEqual(cursor_market["plugins"][0]["name"], "founder-skill")
+        self.assertEqual(cursor_market["plugins"][0]["source"], ".")
 
     def test_readme_carries_the_reel_copy(self):
         with open(os.path.join(ROOT, "README.md"), encoding="utf-8") as fh:
@@ -71,14 +93,41 @@ class Repo(unittest.TestCase):
             "Steve Jobs. One is your marketing director. One is your CFO and finds your real profit margins. And "
             "one is the consumer panel: it spins up 100 buyer agents trained on your target customer and runs your "
             "business through 100 buyer scenarios.",
-            "Paste this repo link into Claude and say `install skill`",
-            "/plugin marketplace add Jakeschincariol/founder-skill",
-            "/plugin install founder-skill@founder-skill",
+            "/founder-board",
+            "~/.cursor/skills",
+            ".cursor-plugin/marketplace.json",
+            "scripts/install-cursor.ps1",
+            "scripts/install-cursor.sh",
             "## Fine print",
         ):
             self.assertIn(line, readme)
         for s in SKILLS:
             self.assertIn("`skills/%s`" % s, readme)
+
+    def test_cursor_skill_contract(self):
+        for s in SKILLS:
+            fm, text = frontmatter(os.path.join(SKILLS_DIR, s, "SKILL.md"))
+            self.assertIn("disable-model-invocation: true", fm, s)
+            self.assertIn("## Where this runs", text, s)
+            desc = re.search(r"description: >-\n(.*?)\nargument-hint:", fm, re.S)
+            self.assertIsNotNone(desc, s)
+            words = " ".join(desc.group(1).split())
+            self.assertLessEqual(len(words), 1024, s)
+        for s in ("founder-board", "founder-consumer"):
+            _, text = frontmatter(os.path.join(SKILLS_DIR, s, "SKILL.md"))
+            self.assertIn("generalPurpose", text, s)
+            self.assertIn("Task", text, s)
+            self.assertIn("general-purpose", text, s)
+
+    def test_install_scripts(self):
+        for name in ("install-cursor.ps1", "install-cursor.sh"):
+            path = os.path.join(ROOT, "scripts", name)
+            with open(path, encoding="utf-8") as fh:
+                script = fh.read()
+            self.assertIn(".cursor", script)
+            self.assertIn("skills", script)
+            self.assertIn("skills-cursor", script)
+            self.assertIn("founder-", script)
 
     def test_examples_parse(self):
         for rel in ("founder-cfo/example.json", "founder-consumer/customer.example.json"):

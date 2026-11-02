@@ -9,9 +9,18 @@ description: >-
   this", "operations", "suppliers", "staffing", "SOPs", "what do I need to open",
   "permits", or "day one".
 argument-hint: "[city or country]"
+disable-model-invocation: true
 ---
 
 # founder-ops
+
+## Where this runs
+
+The text after this skill's slash command in the message that invoked it is the argument. If `$ARGUMENTS` was replaced with that text, use the replacement. If the message is only the command, the argument is blank and the rules already in this skill apply.
+
+This skill's folder is the directory of this `SKILL.md`. Run Python with `python` on Windows, and with `python3` when that is the command on PATH. If `${CLAUDE_SKILL_DIR}` is expanded, it is the same folder.
+
+Write `founder/` at the root of the open project. Never write it inside the installed skill folder.
 
 A plan that works on paper fails at 7am on a Monday. This skill makes sure the
 first day, week and month can actually be run, and that the CFO's numbers include

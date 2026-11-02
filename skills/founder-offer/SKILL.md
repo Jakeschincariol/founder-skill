@@ -10,9 +10,18 @@ description: >-
   "what should I include", "guarantee", "bonuses", "grand slam offer", or after the
   panel shows people passing.
 argument-hint: "[what you sell]"
+disable-model-invocation: true
 ---
 
 # founder-offer
+
+## Where this runs
+
+The text after this skill's slash command in the message that invoked it is the argument. If `$ARGUMENTS` was replaced with that text, use the replacement. If the message is only the command, the argument is blank and the rules already in this skill apply.
+
+This skill's folder is the directory of this `SKILL.md`. Run Python with `python` on Windows, and with `python3` when that is the command on PATH. If `${CLAUDE_SKILL_DIR}` is expanded, it is the same folder.
+
+Write `founder/` at the root of the open project. Never write it inside the installed skill folder.
 
 Most businesses sell a product. Good ones sell an offer: the product plus
 everything that makes buying it an easy yes. This skill builds that, using the

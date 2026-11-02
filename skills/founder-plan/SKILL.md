@@ -10,9 +10,18 @@ description: >-
   when the user says "write my business plan", "put it all together", "is it
   profitable", "give me the plan", or at the end of the founder pack.
 argument-hint: "[--min-buy-rate 0.25]"
+disable-model-invocation: true
 ---
 
 # founder-plan
+
+## Where this runs
+
+The text after this skill's slash command in the message that invoked it is the argument. If `$ARGUMENTS` was replaced with that text, use the replacement. If the message is only the command, the argument is blank and the rules already in this skill apply.
+
+This skill's folder is the directory of this `SKILL.md`. Run Python with `python` on Windows, and with `python3` when that is the command on PATH. If `${CLAUDE_SKILL_DIR}` is expanded, it is the same folder.
+
+Write `founder/` at the root of the open project. Never write it inside the installed skill folder.
 
 The last step. One document a founder can act on, or hand to a partner or a
 lender, built only from what the pack found.
@@ -20,13 +29,13 @@ lender, built only from what the pack found.
 Tool in this folder:
 
 ```bash
-python3 "${CLAUDE_SKILL_DIR}/compile.py" --dir founder
+python "<this skill's folder>/compile.py" --dir founder
 ```
 
 ## Step 1: see what is there
 
 ```bash
-python3 "${CLAUDE_SKILL_DIR}/compile.py" --dir founder --check
+python "<this skill's folder>/compile.py" --dir founder --check
 ```
 
 prints the verdict and each check. The checks, all computed:
@@ -58,7 +67,7 @@ changes it. Never soften a failing check.
 ## Step 3: compile
 
 ```bash
-python3 "${CLAUDE_SKILL_DIR}/compile.py" --dir founder
+python "<this skill's folder>/compile.py" --dir founder
 ```
 
 writes `founder/business-plan.md`: title, the verdict and its checks, the key numbers

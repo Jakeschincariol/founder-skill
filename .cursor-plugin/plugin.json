@@ -1,0 +1,19 @@
+{
+  "name": "founder-skill",
+  "description": "Eleven skills that test a business before you launch it: a board, a competitor scout, a consumer panel of 100 buyer agents, pricing, the offer, a CFO, marketing, brand, operations, a launch plan and the business plan.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Jake Schincariol"
+  },
+  "homepage": "https://github.com/JoaoLuiz92/founder-skill-to-cursor",
+  "repository": "https://github.com/JoaoLuiz92/founder-skill-to-cursor",
+  "license": "MIT",
+  "keywords": [
+    "cursor",
+    "startup",
+    "business-plan",
+    "unit-economics",
+    "subagents"
+  ],
+  "skills": "./skills"
+}

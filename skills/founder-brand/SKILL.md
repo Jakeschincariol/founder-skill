@@ -8,9 +8,18 @@ description: >-
   chose. Use when the user says "name my business", "brand this", "logo", "brand
   identity", "what should it look like", "tagline", or "brand voice".
 argument-hint: "[name ideas, if any]"
+disable-model-invocation: true
 ---
 
 # founder-brand
+
+## Where this runs
+
+The text after this skill's slash command in the message that invoked it is the argument. If `$ARGUMENTS` was replaced with that text, use the replacement. If the message is only the command, the argument is blank and the rules already in this skill apply.
+
+This skill's folder is the directory of this `SKILL.md`. Run Python with `python` on Windows, and with `python3` when that is the command on PATH. If `${CLAUDE_SKILL_DIR}` is expanded, it is the same folder.
+
+Write `founder/` at the root of the open project. Never write it inside the installed skill folder.
 
 A brand is the promise a customer remembers. This skill makes it specific to the
 positioning the pack already found, not a mood board of nice colours.
