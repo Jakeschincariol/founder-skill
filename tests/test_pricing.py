@@ -1,4 +1,5 @@
 import csv
+import json
 import os
 import tempfile
 import unittest
@@ -39,6 +40,44 @@ class Pricing(unittest.TestCase):
             w.writerow((3, "", 6, 8))      # incomplete
         got, dropped = vw.read(path)
         self.assertEqual((len(got), dropped), (10, 2))
+
+    def test_decimal_commas_are_read_as_decimals(self):
+        cases = {
+            "12,50": 12.5, "12,5": 12.5, "12.50": 12.5, "1,250": 1250.0, "1,250.50": 1250.5,
+            "1.250,50": 1250.5, "1 250,50": 1250.5, "1 250,50 €": 1250.5, "$12": 12.0, "12 EUR": 12.0,
+            "CA$9.99": 9.99, "1.250.000": 1250000.0, 7: 7.0, 7.25: 7.25,
+        }
+        for text, want in cases.items():
+            self.assertAlmostEqual(vw.parse_number(text), want, msg=repr(text))
+        for junk in ("lots", "1,2,3", "12,50,00", "", None, True, "1.2.3", "12,5.0"):
+            self.assertIsNone(vw.parse_number(junk), repr(junk))
+        self.assertAlmostEqual(vw.parse_number("1,250", "comma"), 1.25)
+        self.assertAlmostEqual(vw.parse_number("1.250", "comma"), 1250.0)
+        self.assertIsNone(vw.parse_number("12,50", "point"))
+
+    def test_answers_folder_with_typed_decimal_commas(self):
+        # the reported bug: "12,50" used to become 1250
+        d = tempfile.mkdtemp()
+        for i, r in enumerate(rows(10)):
+            a = {"id": "P%03d" % (i + 1)}
+            for k, v in zip(vw.KEYS, r):
+                a["price_" + k] = ("%.2f" % v).replace(".", ",")
+            with open(os.path.join(d, "P%03d.json" % (i + 1)), "w") as fh:
+                json.dump(a, fh)
+        got, dropped = vw.read(d)
+        self.assertEqual((len(got), dropped), (10, 0))
+        self.assertTrue(all(r[3] < 10 for r in got), got)
+
+    def test_semicolon_csv_from_european_excel(self):
+        d = tempfile.mkdtemp()
+        path = os.path.join(d, "p.csv")
+        with open(path, "w", newline="", encoding="utf-8") as fh:
+            fh.write(";".join(vw.KEYS) + "\r\n")
+            for r in rows(10):
+                fh.write(";".join(("%.2f" % v).replace(".", ",") for v in r) + "\r\n")
+        got, dropped = vw.read(path)
+        self.assertEqual((len(got), dropped), (10, 0))
+        self.assertAlmostEqual(got[0][0], 2.5)
 
     def test_too_few_answers_is_refused(self):
         with self.assertRaises(vw.PricingError):

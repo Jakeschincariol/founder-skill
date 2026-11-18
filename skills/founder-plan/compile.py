@@ -7,9 +7,10 @@ computed from the numbers, never written by hand:
 
     Profitable   every check that has data passes
     Not yet      at least one check fails (each failure is listed with its number)
-    Incomplete   there are no numbers yet (run founder-cfo first)
+    Incomplete   there are no usable numbers yet (run founder-cfo first)
 
 The checks:
+    0. costs are listed at all (a plan with no costs is never Profitable)
     1. each unit earns money before fixed costs        (founder/numbers.json)
     2. year 1 makes an operating profit                 (founder/numbers.json)
     3. break-even fits inside capacity, if capacity is given
@@ -74,8 +75,17 @@ def verdict(d, min_buy_rate=0.25):
     raw = _read(os.path.join(d, "numbers.json"))
     if raw:
         ue = _load_unit_economics()
-        numbers = ue.analyse(json.loads(raw))
+        try:
+            numbers = ue.analyse(json.loads(raw))
+        except (ue.NumbersError, ValueError) as e:  # json.JSONDecodeError is a ValueError
+            numbers = None
+            checks.append((False, "numbers.json cannot be used: %s. Fix it with /founder-cfo." % e))
+    if numbers is not None:
         u = numbers["unit"]
+        no_costs = numbers["variable_per_unit"] <= 0 and numbers["fixed_monthly"] <= 0
+        checks.append((not no_costs, "Costs are listed: $%.2f per %s and $%s a month fixed." % (
+            numbers["variable_per_unit"], u, "{:,.0f}".format(numbers["fixed_monthly"])) if not no_costs
+            else "No costs at all are listed, so every sale looks like pure profit. Add them with /founder-cfo."))
         c = numbers["contribution"]
         checks.append((c > 0, "Each %s earns $%.2f before fixed costs (%.0f%% contribution)." % (u, c, numbers["contribution_pct"] * 100)
                        if c > 0 else "Each %s LOSES $%.2f before fixed costs." % (u, -c)))
@@ -89,10 +99,14 @@ def verdict(d, min_buy_rate=0.25):
                 "never reached" if math.isinf(be) else "{:,.0f}".format(math.ceil(be)), u, cap)))
     raw = _read(os.path.join(d, "panel", "results.json"))
     if raw:
-        panel = json.loads(raw)
-        r = panel["buy_rate"]
-        checks.append((r >= min_buy_rate, "%d of %d simulated buyers buy (%.0f%%, the bar is %.0f%%)." % (
-            panel["buys"], panel["answered"], r * 100, min_buy_rate * 100)))
+        try:
+            panel = json.loads(raw)
+            r = float(panel["buy_rate"])
+            checks.append((r >= min_buy_rate, "%d of %d simulated buyers buy (%.0f%%, the bar is %.0f%%)." % (
+                panel["buys"], panel["answered"], r * 100, min_buy_rate * 100)))
+        except (ValueError, KeyError, TypeError) as e:
+            panel = None
+            checks.append((False, "panel/results.json cannot be used (%s). Re-run panel.py tally." % e))
     if numbers is None:
         v = "Incomplete"
     elif all(ok for ok, _ in checks):

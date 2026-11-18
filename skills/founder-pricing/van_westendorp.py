@@ -12,7 +12,9 @@ that leaves the fewest people unhappy.
 
 Input is either the panel's answers folder (one JSON per buyer, written by
 founder-consumer) or a CSV with the columns too_cheap, cheap, expensive,
-too_expensive (one row per respondent; extra columns are ignored). A respondent
+too_expensive (one row per respondent; extra columns are ignored; ',' ';' or tab
+between columns). Typed prices may use a decimal comma: 12,50 is 12.5, while
+1,250 is read as 1250 (--decimal comma reads it as 1.25). A respondent
 missing any of the four numbers, or giving them out of order (too cheap must be
 the lowest, too expensive the highest), is dropped and counted.
 
@@ -31,26 +33,85 @@ import argparse
 import csv
 import glob
 import json
+import math
 import os
+import re
 import sys
 
 KEYS = ("too_cheap", "cheap", "expensive", "too_expensive")
+DECIMALS = ("auto", "point", "comma")
 
 
 class PricingError(Exception):
     pass
 
 
-def _f(v):
-    try:
-        x = float(str(v).replace("$", "").replace(",", "").strip())
-    except (TypeError, ValueError):
+_CURRENCY = re.compile(r"(?i)(us\$|ca\$|au\$|\$|€|£|euros?|eur|usd|cad|gbp|chf|dollars?)")
+_SPACING = re.compile(r"[\s  '’]")
+_GROUPED = {",": re.compile(r"^\d{1,3}(,\d{3})+$"), ".": re.compile(r"^\d{1,3}(\.\d{3})+$")}
+
+
+def parse_number(v, decimal="auto"):
+    """A number from a JSON value or a typed string, or None when it cannot be read without guessing.
+
+    Reads 12.50, 12,50, 1,250.50, 1.250,50, 1 250,50, $12, 12 EUR. decimal="auto" takes a lone comma
+    as the decimal mark ("12,50" is 12.5) unless it groups thousands ("1,250" is 1250); "point" or
+    "comma" forces the mark. Kept identical in founder-consumer/panel.py (skills ship alone).
+    """
+    if v is None or isinstance(v, bool):
         return None
-    return x if x > 0 else None
+    if isinstance(v, (int, float)):
+        x = float(v)
+        return x if math.isfinite(x) else None
+    if not isinstance(v, str):
+        return None
+    s = _SPACING.sub("", _CURRENCY.sub("", v))
+    sign = -1.0 if s.startswith("-") else 1.0
+    s = s.lstrip("-")
+    if not s or not re.fullmatch(r"[\d.,]+", s) or not re.search(r"\d", s):
+        return None
+    if decimal == "point":
+        dec = "."
+    elif decimal == "comma":
+        dec = ","
+    elif "," in s and "." in s:
+        dec = "," if s.rfind(",") > s.rfind(".") else "."
+    elif "," in s:
+        dec = "." if _GROUPED[","].match(s) else ","
+    elif s.count(".") > 1:
+        dec = "," if _GROUPED["."].match(s) else "."
+    else:
+        dec = "."
+    sep = "," if dec == "." else "."
+    whole, frac = (s.rsplit(dec, 1) + [""])[:2] if dec in s else (s, "")
+    if dec in whole or sep in frac:
+        return None
+    if sep in whole:
+        if not _GROUPED[sep].match(whole):
+            return None
+        whole = whole.replace(sep, "")
+    return sign * float("%s.%s" % (whole or "0", frac or "0"))
 
 
-def read(path):
+def _f(v, decimal="auto"):
+    x = parse_number(v, decimal)
+    return x if x is not None and x > 0 else None
+
+
+def _csv_delimiter(fh):
+    """Excel in Europe writes ';' between columns because ',' is the decimal mark.
+    Decided from the header line only: it holds column names, never a decimal number."""
+    header = fh.readline()
+    fh.seek(0)
+    counts = {d: header.count(d) for d in (",", ";", "\t")}
+    best = max(counts, key=lambda d: counts[d])
+    return best if counts[best] else ","
+
+
+def read(path, decimal="auto"):
     """Return (rows, dropped) where rows are (too_cheap, cheap, expensive, too_expensive)."""
+    if decimal not in DECIMALS:
+        raise PricingError("decimal must be one of %s" % ", ".join(DECIMALS))
     raw = []
     if os.path.isdir(path):
         for fp in sorted(glob.glob(os.path.join(path, "*.json"))):
@@ -60,11 +121,14 @@ def read(path):
             except (json.JSONDecodeError, UnicodeDecodeError):
                 raw.append(None)
                 continue
-            raw.append(tuple(_f(a.get("price_" + k)) for k in KEYS))
+            if not isinstance(a, dict):
+                raw.append(None)
+                continue
+            raw.append(tuple(_f(a.get("price_" + k), decimal) for k in KEYS))
     elif path.endswith(".csv"):
-        with open(path, newline="", encoding="utf-8") as fh:
-            for r in csv.DictReader(fh):
-                raw.append(tuple(_f(r.get(k)) for k in KEYS))
+        with open(path, newline="", encoding="utf-8-sig") as fh:
+            for r in csv.DictReader(fh, delimiter=_csv_delimiter(fh)):
+                raw.append(tuple(_f(r.get(k), decimal) for k in KEYS))
     else:
         raise PricingError("give the panel's answers folder or a .csv")
     rows, dropped = [], 0
@@ -142,15 +206,24 @@ def report(res, dropped, price=None):
     return "\n".join(L) + "\n"
 
 
+def _price_arg(text):
+    x = parse_number(text)
+    if x is None or x <= 0:
+        raise argparse.ArgumentTypeError("not a price: %r" % text)
+    return x
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("source", help="the panel's answers folder, or a CSV")
-    ap.add_argument("--price", type=float, help="your current price, to place it on the range")
+    ap.add_argument("--price", type=_price_arg, help="your current price, to place it on the range (6.50 or 6,50)")
+    ap.add_argument("--decimal", choices=DECIMALS, default="auto",
+                    help="decimal mark in typed answers: auto (12,50 is 12.5; 1,250 is 1250), point, or comma")
     ap.add_argument("--out", help="write the report here (markdown)")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args(argv)
     try:
-        rows, dropped = read(a.source)
+        rows, dropped = read(a.source, a.decimal)
         res = analyse(rows)
     except (PricingError, FileNotFoundError) as e:
         print("error: %s" % e, file=sys.stderr)

@@ -63,6 +63,10 @@ PANEL prompts
 ```
 
 `init` deals the persona cards (same seed, same cards; the seed is recorded).
+For `--quick`, pass `--quick` to `init` (20 buyers) instead of `--n 100`. If a
+panel already ran, `init` first moves it into `founder/panel/runs/NNN/`, so no
+answer to an old pitch is counted for the new one; its `results.md` stays there
+for a before/after comparison.
 `prompts` writes one brief per buyer and lists them in waves of 10. For each wave,
 send ONE message with one Agent tool call per buyer in that wave (the Agent tool
 is called Task in older Claude Code versions):
