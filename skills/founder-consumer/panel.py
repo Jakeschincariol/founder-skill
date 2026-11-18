@@ -6,7 +6,7 @@ per buyer from your target-customer profile (income, age, behaviour, objection),
 writes one brief per buyer for a sub-agent to answer, checks the answers, and
 tallies who buys, who doesn't, and why.
 
-    python3 panel.py init --customer founder/customer.json --pitch founder/pitch.md [--n 100] [--seed 7]
+    python3 panel.py init --customer founder/customer.json --pitch founder/pitch.md [--n 100 | --quick] [--seed 7]
     python3 panel.py prompts [--wave 10]     # one brief per buyer still to run, listed in waves
     python3 panel.py check                   # which answers are missing or broken
     python3 panel.py save P003 < reply.txt   # file a buyer's own JSON that it printed instead of writing
@@ -14,7 +14,9 @@ tallies who buys, who doesn't, and why.
     python3 panel.py status
 
 State lives in founder/panel/ (--dir to change it): panel.json, personas.json,
-briefs/<id>.md, answers/<id>.json, results.md, results.json.
+briefs/<id>.md, answers/<id>.json, results.md, results.json. A new init moves the
+previous run into runs/NNN/ first, so an answer to an old pitch is never counted
+for a new one, and the old results stay there to compare against.
 
 The tool never answers for a buyer. Every number in results.md is counted from
 the answer files the sub-agents wrote. Simulated buyers are a fast, cheap way to
@@ -24,8 +26,11 @@ with real ones (a pre-sale, a waitlist, a landing page with a price on it).
 
 import argparse
 import json
+import math
 import os
 import random
+import re
+import shutil
 import sys
 
 FIRST_NAMES = [
@@ -43,6 +48,8 @@ FIRST_NAMES = [
 REASONS = ["price", "habit", "need", "trust", "quality", "convenience", "timing", "values", "other"]
 ANSWER_FIELDS = {"id", "buys", "reason_code", "reason"}
 WAVE = 10
+QUICK = 20
+RUN_FILES = ("panel.json", "personas.json", "briefs", "answers", "results.md", "results.json")
 
 
 class PanelError(Exception):
@@ -129,6 +136,21 @@ def _write_json(path, obj):
         fh.write("\n")
 
 
+def _archive_previous(d):
+    """Move the last run into runs/NNN/ so none of its answers is reused. Returns that path, or None."""
+    present = [f for f in RUN_FILES if os.path.exists(_path(d, f))]
+    if not present:
+        return None
+    k = 1
+    while os.path.exists(_path(d, "runs", "%03d" % k)):
+        k += 1
+    dest = _path(d, "runs", "%03d" % k)
+    os.makedirs(dest)
+    for f in present:
+        shutil.move(_path(d, f), _path(dest, f))
+    return dest
+
+
 def init(d, customer_path, pitch_path, n=100, seed=None):
     try:
         customer = _read_json(customer_path)
@@ -143,8 +165,10 @@ def init(d, customer_path, pitch_path, n=100, seed=None):
         raise PanelError("the pitch is empty")
     if seed is None:
         seed = random.SystemRandom().randrange(1, 10 ** 6)
-    cards = deal(customer, n, seed)
-    _write_json(_path(d, "panel.json"), {"n": n, "seed": seed, "customer": customer, "pitch": pitch})
+    cards = deal(customer, n, seed)  # validates everything before the old run is touched
+    previous = _archive_previous(d)
+    _write_json(_path(d, "panel.json"), {"n": n, "seed": seed, "customer": customer, "pitch": pitch,
+                                         "previous_run": previous})
     _write_json(_path(d, "personas.json"), cards)
     os.makedirs(_path(d, "briefs"), exist_ok=True)
     os.makedirs(_path(d, "answers"), exist_ok=True)
@@ -265,11 +289,55 @@ def _rate(rows):
     return (sum(1 for r in rows if r["buys"]) / len(rows)) if rows else 0.0
 
 
-def _num(v):
-    try:
-        return float(v)
-    except (TypeError, ValueError):
+_CURRENCY = re.compile(r"(?i)(us\$|ca\$|au\$|\$|€|£|euros?|eur|usd|cad|gbp|chf|dollars?)")
+_SPACING = re.compile(r"[\s  '’]")
+_GROUPED = {",": re.compile(r"^\d{1,3}(,\d{3})+$"), ".": re.compile(r"^\d{1,3}(\.\d{3})+$")}
+
+
+def parse_number(v, decimal="auto"):
+    """A number from a JSON value or a typed string, or None when it cannot be read without guessing.
+
+    Reads 12.50, 12,50, 1,250.50, 1.250,50, 1 250,50, $12, 12 EUR. decimal="auto" takes a lone comma
+    as the decimal mark ("12,50" is 12.5) unless it groups thousands ("1,250" is 1250); "point" or
+    "comma" forces the mark. Kept identical in founder-pricing/van_westendorp.py (skills ship alone).
+    """
+    if v is None or isinstance(v, bool):
         return None
+    if isinstance(v, (int, float)):
+        x = float(v)
+        return x if math.isfinite(x) else None
+    if not isinstance(v, str):
+        return None
+    s = _SPACING.sub("", _CURRENCY.sub("", v))
+    sign = -1.0 if s.startswith("-") else 1.0
+    s = s.lstrip("-")
+    if not s or not re.fullmatch(r"[\d.,]+", s) or not re.search(r"\d", s):
+        return None
+    if decimal == "point":
+        dec = "."
+    elif decimal == "comma":
+        dec = ","
+    elif "," in s and "." in s:
+        dec = "," if s.rfind(",") > s.rfind(".") else "."
+    elif "," in s:
+        dec = "." if _GROUPED[","].match(s) else ","
+    elif s.count(".") > 1:
+        dec = "," if _GROUPED["."].match(s) else "."
+    else:
+        dec = "."
+    sep = "," if dec == "." else "."
+    whole, frac = (s.rsplit(dec, 1) + [""])[:2] if dec in s else (s, "")
+    if dec in whole or sep in frac:
+        return None
+    if sep in whole:
+        if not _GROUPED[sep].match(whole):
+            return None
+        whole = whole.replace(sep, "")
+    return sign * float("%s.%s" % (whole or "0", frac or "0"))
+
+
+def _num(v):
+    return parse_number(v)
 
 
 def tally(d):
@@ -331,8 +399,10 @@ def tally(d):
 def results_md(res):
     pct = lambda v: "%.0f%%" % (v * 100)
     L = ["# Buyer panel: %s" % res["business"], ""]
-    L.append("**%d buy · %d pass** (%s buy) out of %d simulated buyers. Seed %s, so the same cards can be dealt again."
-             % (res["buys"], res["passes"], pct(res["buy_rate"]), res["answered"], res["seed"]))
+    L.append("**%d buy · %d pass** (%s buy) out of %d simulated buyers. Seed %s, %d dealt: pass both to init"
+             " (--seed %s --n %d) to deal the same cards again."
+             % (res["buys"], res["passes"], pct(res["buy_rate"]), res["answered"], res["seed"], res["dealt"],
+                res["seed"], res["dealt"]))
     if res["skipped"]:
         L.append("")
         L.append("%d of %d buyers have no valid answer and are left out: %s." % (
@@ -368,7 +438,8 @@ def main(argv=None):
     i = sub.add_parser("init")
     i.add_argument("--customer", required=True)
     i.add_argument("--pitch", required=True)
-    i.add_argument("--n", type=int, default=100)
+    i.add_argument("--n", type=int, help="buyers to deal (default 100)")
+    i.add_argument("--quick", action="store_true", help="a first look: %d buyers" % QUICK)
     i.add_argument("--seed", type=int)
     p = sub.add_parser("prompts")
     p.add_argument("--wave", type=int, default=WAVE)
@@ -381,8 +452,13 @@ def main(argv=None):
     a = ap.parse_args(argv)
     try:
         if a.cmd == "init":
-            cards = init(a.dir, a.customer, a.pitch, a.n, a.seed)
+            if a.quick and a.n not in (None, QUICK):
+                raise PanelError("--quick deals %d buyers; drop --n or drop --quick" % QUICK)
+            n = QUICK if a.quick else (a.n if a.n is not None else 100)
+            cards = init(a.dir, a.customer, a.pitch, n, a.seed)
             st, _ = load_state(a.dir)
+            if st.get("previous_run"):
+                print("previous run moved to %s (its results are there to compare)" % st["previous_run"])
             print("dealt %d buyers (seed %s) into %s. Next: panel.py prompts" % (len(cards), st["seed"], a.dir))
         elif a.cmd == "prompts":
             waves = write_briefs(a.dir, a.wave)

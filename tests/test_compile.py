@@ -57,6 +57,35 @@ class Compile(unittest.TestCase):
         v, _ = plan.compile_plan(self.d)
         self.assertEqual(v, "Not yet")
 
+    def test_missing_cost_lists_are_never_profitable(self):
+        # the reported bug: no cost lists at all used to compile as Profitable
+        with open(os.path.join(self.d, "numbers.json"), "w") as fh:
+            json.dump({"business": "x", "unit": "cup", "price": 6.5, "plan_per_day": 100}, fh)
+        self.panel(40)
+        v, text = plan.compile_plan(self.d)
+        self.assertEqual(v, "Incomplete")
+        self.assertIn("numbers.json cannot be used", text)
+
+    def test_empty_cost_lists_mean_not_yet(self):
+        self.numbers(variable=[], fixed_monthly=[], startup=[])
+        self.panel(40)
+        v, text = plan.compile_plan(self.d)
+        self.assertEqual(v, "Not yet")
+        self.assertIn("No costs at all are listed", text)
+
+    def test_broken_files_do_not_crash(self):
+        with open(os.path.join(self.d, "numbers.json"), "w") as fh:
+            fh.write("{not json")
+        v, _ = plan.compile_plan(self.d)
+        self.assertEqual(v, "Incomplete")
+        self.numbers()
+        os.makedirs(os.path.join(self.d, "panel"), exist_ok=True)
+        with open(os.path.join(self.d, "panel", "results.json"), "w") as fh:
+            fh.write("{}")
+        v, text = plan.compile_plan(self.d)
+        self.assertEqual(v, "Not yet")
+        self.assertIn("panel/results.json cannot be used", text)
+
 
 if __name__ == "__main__":
     unittest.main()

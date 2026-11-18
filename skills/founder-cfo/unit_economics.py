@@ -84,6 +84,12 @@ def analyse(spec, price=None, volume=1.0):
     if p <= 0:
         raise NumbersError("price must be above zero")
     days = float(spec.get("days_per_month", 30))
+    # a missing cost list is not a zero cost: refuse it instead of reading it as 0
+    for field in ("variable", "fixed_monthly", "startup"):
+        if spec.get(field) is None:
+            raise NumbersError("'%s' is missing: list the costs, or write [] if there truly are none" % field)
+        if not isinstance(spec[field], list):
+            raise NumbersError("'%s' must be a list of {label, cost}" % field)
     var = _sum(spec.get("variable"), "variable")
     fixed = _sum(spec.get("fixed_monthly"), "fixed_monthly")
     startup = _sum(spec.get("startup"), "startup")
@@ -129,6 +135,10 @@ def analyse(spec, price=None, volume=1.0):
 
     capacity = spec.get("capacity_per_day")
     flags = []
+    if not spec["variable"]:
+        flags.append("No variable cost is listed: almost every unit costs something to make, sell or deliver (card fees at least).")
+    if not spec["fixed_monthly"]:
+        flags.append("No fixed monthly cost is listed: check software, insurance, accounting and your own pay.")
     if contribution <= 0:
         flags.append("Each unit loses money before rent and salaries: the price is below the variable cost.")
     if capacity is not None and breakeven_day > float(capacity):

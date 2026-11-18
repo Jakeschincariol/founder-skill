@@ -60,6 +60,25 @@ class UnitEconomics(unittest.TestCase):
         with self.assertRaises(ue.NumbersError):
             ue.analyse(s)
 
+    def test_missing_cost_lists_are_refused_not_read_as_zero(self):
+        for field in ("variable", "fixed_monthly", "startup"):
+            s = spec()
+            del s[field]
+            with self.assertRaises(ue.NumbersError, msg=field):
+                ue.analyse(s)
+        s = spec()
+        s["fixed_monthly"] = {"label": "rent", "cost": 900}
+        with self.assertRaises(ue.NumbersError):
+            ue.analyse(s)
+
+    def test_empty_cost_lists_are_allowed_but_flagged(self):
+        s = spec()
+        s["variable"] = []
+        s["fixed_monthly"] = []
+        a = ue.analyse(s)
+        self.assertTrue(any("No variable cost" in f for f in a["flags"]))
+        self.assertTrue(any("No fixed monthly cost" in f for f in a["flags"]))
+
     def test_report_mentions_the_key_numbers(self):
         s = spec()
         text = ue.report(s, ue.analyse(s))

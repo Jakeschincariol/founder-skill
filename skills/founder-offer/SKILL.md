@@ -57,9 +57,13 @@ element of the stack moves which score.
 ## Step 5: re-test it
 
 Write the new offer into `founder/pitch.md` (keep the old one as
-`founder/pitch-v1.md`) and run `/founder-consumer --quick` with the same seed.
-Report the buy rate before and after and which objections dropped. If nothing
-moved, say so: the problem may be the market or the price, not the offer.
+`founder/pitch-v1.md`) and run `/founder-consumer` again with the same seed and
+the same number of buyers as the run you compare against (both are in its
+`results.md`): with another count the cards differ and the comparison mixes a new
+panel with a new offer. The new `init` moves the old run into
+`founder/panel/runs/NNN/`; compare against that run's `results.md`. Report the buy
+rate before and after and which objections dropped. If nothing moved, say so: the
+problem may be the market or the price, not the offer.
 
 ## Rules
 

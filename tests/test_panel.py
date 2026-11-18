@@ -102,6 +102,52 @@ class Flow(unittest.TestCase):
         with self.assertRaises(panel.PanelError):
             panel.tally(self.d)
 
+    def test_a_new_init_never_reuses_old_answers(self):
+        # the reported bug: an offer re-test kept the "before" answers, so "after" repeated "before"
+        for i in range(1, 21):
+            self.answer("P%03d" % i, False)
+        self.assertEqual(panel.main(["--dir", self.d, "tally"]), 0)
+        pitch2 = os.path.join(self.d, "pitch-v2.md")
+        with open(pitch2, "w", encoding="utf-8") as fh:
+            fh.write("Moss Matcha Bar, now with a free second cup on your first visit.\n")
+        panel.init(self.d, example("founder-consumer", "customer.example.json"), pitch2, n=20, seed=5)
+        ids = [j[0] for w in panel.write_briefs(self.d) for j in w]
+        self.assertEqual(len(ids), 20)
+        self.assertEqual(len(panel.check(self.d)), 20)
+        old = os.path.join(self.d, "runs", "001")
+        self.assertTrue(os.path.isfile(os.path.join(old, "answers", "P001.json")))
+        self.assertTrue(os.path.isfile(os.path.join(old, "results.json")))
+        state, _ = panel.load_state(self.d)
+        self.assertEqual(state["previous_run"], old)
+        with open(os.path.join(self.d, "briefs", "P001.md"), encoding="utf-8") as fh:
+            self.assertIn("free second cup", fh.read())
+
+    def test_a_failed_init_leaves_the_last_run_alone(self):
+        self.answer("P001", True, "quality")
+        with self.assertRaises(panel.PanelError):
+            panel.init(self.d, example("founder-consumer", "customer.example.json"),
+                       os.path.join(self.d, "no-such-pitch.md"), n=20, seed=5)
+        self.assertTrue(os.path.isfile(os.path.join(self.d, "answers", "P001.json")))
+        self.assertFalse(os.path.exists(os.path.join(self.d, "runs")))
+
+    def test_quick_flag_deals_twenty(self):
+        d = tempfile.mkdtemp()
+        try:
+            rc = panel.main(["--dir", d, "init", "--customer", example("founder-consumer", "customer.example.json"),
+                             "--pitch", example("founder-consumer", "pitch.example.md"), "--quick", "--seed", "3"])
+            self.assertEqual(rc, 0)
+            self.assertEqual(len(panel.load_state(d)[1]), 20)
+            rc = panel.main(["--dir", d, "init", "--customer", example("founder-consumer", "customer.example.json"),
+                             "--pitch", example("founder-consumer", "pitch.example.md"), "--quick", "--n", "50"])
+            self.assertEqual(rc, 2)
+        finally:
+            shutil.rmtree(d)
+
+    def test_typed_numbers_with_decimal_commas(self):
+        self.assertEqual(panel._num("12,50"), 12.5)
+        self.assertEqual(panel._num(3), 3.0)
+        self.assertIsNone(panel._num("a few"))
+
 
 if __name__ == "__main__":
     unittest.main()
