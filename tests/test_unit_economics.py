@@ -60,6 +60,13 @@ class UnitEconomics(unittest.TestCase):
         with self.assertRaises(ue.NumbersError):
             ue.analyse(s)
 
+    def test_report_shows_fractional_daily_break_even(self):
+        s = {"price": 100, "unit": "order", "fixed_monthly": [{"cost": 500}],
+             "days_per_month": 20, "plan_per_day": 1}
+        text = ue.report(s, ue.analyse(s))
+        self.assertIn("0.25 orders a day (5.0 a month)", text)
+        self.assertRegex(text, r"\| Base plan \| [^|]+ \| 0\.25 \|")
+
     def test_report_mentions_the_key_numbers(self):
         s = spec()
         text = ue.report(s, ue.analyse(s))

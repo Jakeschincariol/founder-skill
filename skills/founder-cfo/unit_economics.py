@@ -189,8 +189,13 @@ def report(spec, a):
         "%s %s" % (it.get("label", "cost"), _whole(float(it["cost"]))) for it in a["fixed_items"]) or "none given"))
     L.append("")
     be = a["breakeven_per_day"]
-    L.append("- **Break-even: %s %ss a day.** Below that you lose money every month." % (
-        "never (each unit loses money)" if math.isinf(be) else "{:,.0f}".format(math.ceil(be)), u))
+    if math.isinf(be):
+        be_str = "never (each unit loses money)"
+    elif be < 1.0:
+        be_str = "%.2f %ss a day (%.1f a month)" % (be, u, be * float(spec.get("days_per_month", 30)))
+    else:
+        be_str = "%s %ss a day" % ("{:,.0f}".format(math.ceil(be)), u)
+    L.append("- **Break-even: %s.** Below that you lose money every month." % be_str)
     L.append("- **Profit margin at your plan** (%s a day): **%.0f%%** of every sale, after every cost." % (
         "{:,.0f}".format(a["plan_per_day"]), a["margin_at_plan"] * 100))
     if a["capacity_per_day"] is not None:
@@ -216,7 +221,7 @@ def report(spec, a):
     for name, s in sensitivity(spec):
         be = s["breakeven_per_day"]
         L.append("| %s | %.0f%% | %s | %s |" % (name, s["margin_at_plan"] * 100,
-                                              "never" if math.isinf(be) else "{:,.0f}".format(math.ceil(be)),
+                                              "never" if math.isinf(be) else ("%.2f" % be if be < 1 else "{:,.0f}".format(math.ceil(be))),
                                               _whole(s["year1_profit"])))
     L.append("")
     if a["flags"]:
